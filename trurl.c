@@ -1026,6 +1026,54 @@ static void json(struct option *o, CURLU *uh)
   fputs("\n  }", stdout);
 }
 
+static void csv(struct option *o, CURLU *uh)
+{
+  int i;
+  bool first = true;
+  char *url;
+  CURLUcode rc = geturlpart(o, 0, uh, CURLUPART_URL, &url);
+  if(rc) {
+    trurl_cleanup_options(o);
+    verify(o, ERROR_BADURL, "invalid url [%s]", curl_url_strerror(rc));
+    return;
+  }
+  curl_free(url);
+  puts("key,value");
+  for(i = 0; variables[i].name; i++) {
+    char *part;
+    rc = geturlpart(o, 0, uh, variables[i].part, &part);
+    if(!rc) {
+      if(!first)
+        fputc('\n', stdout);
+      first = false;
+      printf("%s,", variables[i].name);
+      csvString(stdout, part, strlen(part), false);
+      curl_free(part);
+    }
+  }
+  if(nqpairs) {
+    int j;
+    for(j = 0 ; j < nqpairs; j++) {
+      const char *sep = strchr(qpairsdec[j].str, '=');
+      const char *value = sep ? sep + 1 : "";
+
+      /* don't print out empty/trimmed values */
+      if(!qpairsdec[j].str[0])
+        continue;
+      if(!first)
+        fputc('\n', stdout);
+      first = false;
+      csvString(stdout, qpairsdec[j].str,
+                 sep ? (size_t)(sep - qpairsdec[j].str) :
+                       qpairsdec[j].len,
+                 false);
+      fputc(',', stdout);
+      csvString(stdout, sep?value:"", sep?qpairsdec[j].len:0, false);
+    }
+  }
+  putc('\n', stdout);
+}
+
 /* --trim query="utm_*" */
 static void trim(struct option *o)
 {
@@ -1473,6 +1521,8 @@ static void singleurl(struct option *o,
       ;
     else if(o->jsonout)
       json(o, uh);
+    else if(o->csvout)
+      csv(o, uh);
     else if(o->format) {
       /* custom output format */
       get(o, uh);
