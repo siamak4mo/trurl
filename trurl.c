@@ -927,6 +927,49 @@ static void jsonString(FILE *stream, const char *in, size_t len,
   fputc('\"', stream);
 }
 
+static void csvString(FILE *stream, const char *in, size_t len,
+                       bool lowercase)
+{
+  bool need_quotes = false;
+  const unsigned char *i = (unsigned char *)in;
+  const char *in_end = &in[len];
+
+  for(; i < (unsigned char *)in_end; i++) {
+    if(*i == ' ' || *i == ',' || *i == '\"') {
+      need_quotes = true;
+      break;
+    }
+  }
+  if(need_quotes)
+    fputc('\"', stream);
+
+  i = (unsigned char *)in;
+  for(; i < (unsigned char *)in_end; i++) {
+    switch(*i) {
+    case '\"':
+      fputs("\"\"", stream);
+      break;
+    case '\n':
+      fputs("\\n", stream);
+      break;
+    case '\r':
+      fputs("\\r", stream);
+      break;
+    default:
+      {
+        char out = *i;
+        if(lowercase && (out >= 'A' && out <= 'Z'))
+          /* do not use tolower() since that's locale specific */
+          out |= ('a' - 'A');
+        fputc(out, stream);
+        break;
+      }
+    }
+  }
+  if(need_quotes)
+    fputc('\"', stream);
+}
+
 static void json(struct option *o, CURLU *uh)
 {
   int i;
