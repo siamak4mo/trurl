@@ -268,6 +268,7 @@ struct option {
   FILE *url;
   bool urlopen;
   bool jsonout;
+  bool csvout;
   bool verify;
   bool accept_space;
   bool curl;
@@ -539,6 +540,13 @@ static int getarg(struct option *o,
     if(o->format)
       errorf(o, ERROR_FLAG, "--json is mututally exclusive with --get");
     o->jsonout = true;
+  }
+  else if(!strcmp("--csv", flag)) {
+    if(o->format)
+      errorf(o, ERROR_FLAG, "--csv is mututally exclusive with --get");
+    if(o->jsonout)
+      errorf(o, ERROR_FLAG, "--csv is mututally exclusive with --json");
+    o->csvout = true;
   }
   else if(!strcmp("--verify", flag))
     o->verify = true;
