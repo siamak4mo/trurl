@@ -533,12 +533,17 @@ static int getarg(struct option *o,
     if(o->jsonout)
       errorf(o, ERROR_FLAG,
                    "--get is mututally exclusive with --json");
+    if(o->csvout)
+      errorf(o, ERROR_FLAG,
+                   "--get is mututally exclusive with --csv");
     o->format = arg;
     *usedarg = true;
   }
   else if(!strcmp("--json", flag)) {
     if(o->format)
       errorf(o, ERROR_FLAG, "--json is mututally exclusive with --get");
+    if(o->csvout)
+      errorf(o, ERROR_FLAG, "--json is mututally exclusive with --csv");
     o->jsonout = true;
   }
   else if(!strcmp("--csv", flag)) {
